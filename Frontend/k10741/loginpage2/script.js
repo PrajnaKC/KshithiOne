@@ -63,7 +63,7 @@ if (loginForm) {
 
     msg.textContent = '✅ Redirecting...';
     setTimeout(() => {
-      window.location.href = '../va page/va_dashboard.html';
+      window.location.href = '/va-dashboard';
     }, 1000);
   });
 }
@@ -85,7 +85,7 @@ if (signupForm) {
 
     msg.textContent = '✅ Account created! Redirecting...';
     setTimeout(() => {
-      window.location.href = '../va page/va_dashboard.html';
+      window.location.href = '/va-dashboard';
     }, 1000);
   });
 }

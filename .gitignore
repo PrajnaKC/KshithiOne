@@ -1,0 +1,29 @@
+# Environment variables (API keys)
+.env
+*.env
+
+# Python virtual environment
+venv-py310/
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Uploads
+uploads/
+static/uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Service account keys
+Encro/keys/
+*.json.bak

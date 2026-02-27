@@ -61,7 +61,7 @@ if (loginForm) {
     localStorage.setItem('loggedUser', email.split('@')[0]);
     msg.textContent = '✅ Redirecting...';
     setTimeout(() => {
-      window.location.href = '../farmer_VA page/farmer_dashboard.html';
+      window.location.href = '/farmer-dashboard';
     }, 1000);
   });
 }
@@ -82,7 +82,7 @@ if (signupForm) {
     localStorage.setItem('loggedUser', name);
     msg.textContent = '✅ Account created! Redirecting...';
     setTimeout(() => {
-      window.location.href = '../farmer_VA page/farmer_dashboard.html';
+      window.location.href = '/farmer-dashboard';
     }, 1000);
   });
 }

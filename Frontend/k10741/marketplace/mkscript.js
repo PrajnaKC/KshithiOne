@@ -17,7 +17,7 @@ async function initMap() {
   const polygonsMap = {}; // ✅ store polygons by owner name
 
   try {
-    const response = await fetch("trail1.json");
+    const response = await fetch("/marketplace/trail1.json");
     const geoData = await response.json();
 
     geoData.features.forEach(feature => {

@@ -108,7 +108,7 @@ async function initMap() {
   });
 
   // Load GeoJSON file
-  const response = await fetch("trail1.json");
+  const response = await fetch("/farmer-dashboard/trail1.json");
   const data = await response.json();
 
   const userName = storedUser ? storedUser.toLowerCase() : null;

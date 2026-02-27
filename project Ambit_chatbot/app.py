@@ -136,7 +136,7 @@ def chat():
             knowledge_base=knowledge_base_string,
             user_question=user_question
         )
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(final_prompt)
         elapsed = round(time.time() - start_time, 3)
         return jsonify({'success': True, 'reply': response.text, 'elapsed': elapsed})
@@ -153,4 +153,4 @@ if __name__ == '__main__':
     print(f"Farmer data loaded: {farmer_df is not None}")
     print(f"API configured: {api_key is not None}")
     print("="*50 + "\n")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)

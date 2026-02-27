@@ -88,7 +88,7 @@ window.focusScheme = function(e){
 // fetch geojson
 async function loadGeoJSON(){
   try {
-    const res = await fetch('trail1.json');
+    const res = await fetch('/va-dashboard/trail1.json');
     geoData = await res.json();
     buildSchemeTiles();
   } catch (err){
