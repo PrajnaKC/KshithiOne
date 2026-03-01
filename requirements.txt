@@ -1,10 +1,21 @@
-flask
-flask-cors
-python-dotenv
-google-generativeai
-pandas
-numpy
-Pillow
-opencv-python-headless
-requests
-earthengine-api
+# Web framework
+Flask>=3.0,<3.2
+Flask-CORS>=6.0,<7.0
+
+# Core runtime dependencies
+python-dotenv>=1.0,<2.0
+requests>=2.31,<3.0
+pandas>=2.0,<3.0
+numpy>=2.0,<3.0
+Pillow>=10.0,<13.0
+opencv-python-headless>=4.8,<5.0
+
+# Google integrations
+google-generativeai>=0.8,<1.0
+earthengine-api>=1.0,<2.0
+
+# Production server
+gunicorn>=21,<24
+
+# Optional (only if you want real CNN inference in production)
+# tensorflow>=2.15,<2.21

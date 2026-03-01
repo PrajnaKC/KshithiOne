@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 Satellite Image Classification Web Application
@@ -322,13 +323,37 @@ try:
 except Exception:
     SatelliteImageClassification = None
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, static_folder='static', template_folder='Frontend/k10741')
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+from flask import abort, send_from_directory, render_template
+import os
 
+# Route to list and access all files in Encro folder
+@app.route('/encro-files/')
+@app.route('/encro-files/<path:filename>')
+def encro_files(filename=None):
+    encro_dir = os.path.join(os.path.dirname(__file__), 'Encro')
+    if filename:
+        file_path = os.path.join(encro_dir, filename)
+        if os.path.isfile(file_path):
+            return send_from_directory(encro_dir, filename)
+        else:
+            abort(404)
+    else:
+        # Directory listing
+        files = []
+        for root, dirs, file_names in os.walk(encro_dir):
+            for name in file_names:
+                rel_path = os.path.relpath(os.path.join(root, name), encro_dir)
+                files.append(rel_path)
+        return render_template('encro_directory_listing.html', files=files)
+# --- Secure HTML serving routes for Google Maps API key injection ---
 # Configure multiple template folders
 import jinja2
 app.jinja_loader = jinja2.ChoiceLoader([
     jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'project Ambit_chatbot', 'templates')),
     jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'Frontend', 'k10741')),
+    jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'Encro', 'frontend')),
 ])
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -343,17 +368,31 @@ CORS(app)
 # EARTH ENGINE INITIALIZATION (for Encroachment Detection)
 # ============================================================================
 EE_INITIALIZED = False
+# For Render deployment, allow environment variable override
+EE_SERVICE_ACCOUNT_JSON = os.getenv("EE_SERVICE_ACCOUNT_JSON")
+
 if EE_AVAILABLE:
     try:
         SERVICE_ACCOUNT = "prajna-earth-engine-service-ac@academic-script-473911-k4.iam.gserviceaccount.com"
-        EE_KEY_FILE = os.path.join(os.path.dirname(__file__), 'Encro', 'keys', 'Google earth engine service account key.json')
-        if os.path.exists(EE_KEY_FILE):
-            credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT, EE_KEY_FILE)
+        
+        if EE_SERVICE_ACCOUNT_JSON:
+            # Production: Use environment variable JSON
+            import json
+            service_account_info = json.loads(EE_SERVICE_ACCOUNT_JSON)
+            credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT, key_data=service_account_info)
             ee.Initialize(credentials)
             EE_INITIALIZED = True
-            print("✅ Google Earth Engine initialized")
+            print("✅ Google Earth Engine initialized from environment variable")
         else:
-            print(f"⚠️  Earth Engine key file not found: {EE_KEY_FILE}")
+            # Development: Use local key file
+            EE_KEY_FILE = os.path.join(os.path.dirname(__file__), 'Encro', 'keys', 'Google earth engine service account key.json')
+            if os.path.exists(EE_KEY_FILE):
+                credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT, EE_KEY_FILE)
+                ee.Initialize(credentials)
+                EE_INITIALIZED = True
+                print("✅ Google Earth Engine initialized from local file")
+            else:
+                print(f"⚠️  Earth Engine key file not found: {EE_KEY_FILE}")
     except Exception as e:
         print(f"⚠️  Earth Engine initialization failed: {e}")
 
@@ -362,7 +401,6 @@ AGRI_CLASS = 4
 
 # Initialize CNN model globally
 satellite_classifier = None
-GOOGLE_MAPS_API_KEY = "AIzaSyDciPsvdxOy-OnesSpduDg_g-mojbC-NGI"
 MODEL_PATH = "Models/Version2/Model_V2_100.keras"
 
 def initialize_cnn_model():
@@ -1444,8 +1482,8 @@ def hero_assets(filename):
 
 @app.route('/marketplace')
 def marketplace_page():
-    """Serve the marketplace page."""
-    return send_from_directory(os.path.join(FRONTEND_DIR, 'marketplace'), 'market-index.html')
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    return render_template("marketplace/market-index.html", GOOGLE_MAPS_API_KEY=api_key)
 
 @app.route('/marketplace/<path:filename>')
 def marketplace_assets(filename):
@@ -1474,8 +1512,8 @@ def va_login_assets(filename):
 
 @app.route('/farmer-dashboard')
 def farmer_dashboard():
-    """Serve the farmer dashboard page."""
-    return send_from_directory(os.path.join(FRONTEND_DIR, 'farmer_VA page'), 'farmer_dashboard.html')
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    return render_template("farmer_VA page/farmer_dashboard.html", GOOGLE_MAPS_API_KEY=api_key)
 
 @app.route('/farmer-dashboard/<path:filename>')
 def farmer_dashboard_assets(filename):
@@ -1484,8 +1522,8 @@ def farmer_dashboard_assets(filename):
 
 @app.route('/va-dashboard')
 def va_dashboard():
-    """Serve the VA dashboard page."""
-    return send_from_directory(os.path.join(FRONTEND_DIR, 'va page'), 'va_dashboard.html')
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    return render_template("va page/va_dashboard.html", GOOGLE_MAPS_API_KEY=api_key)
 
 @app.route('/va-dashboard/<path:filename>')
 def va_dashboard_assets(filename):
@@ -1514,7 +1552,7 @@ def serve_trail1_json():
 # ============================================================================
 @app.route('/encro')
 def encro_page():
-    """Serve the encroachment frontend."""
+    """Serve the Encroachment analysis page (Jhalawar Land Analysis)."""
     encro_dir = os.path.join(os.path.dirname(__file__), 'Encro', 'frontend')
     return send_from_directory(encro_dir, 'index.html')
 

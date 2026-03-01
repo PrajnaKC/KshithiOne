@@ -26,4 +26,5 @@ Thumbs.db
 
 # Service account keys
 Encro/keys/
+Encro/keys/*.json
 *.json.bak
