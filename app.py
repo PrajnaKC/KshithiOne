@@ -373,43 +373,44 @@ EE_SERVICE_ACCOUNT_JSON = os.getenv("EE_SERVICE_ACCOUNT_JSON")
 
 if EE_AVAILABLE:
     try:
-        SERVICE_ACCOUNT = "prajna-earth-engine-service-ac@academic-script-473911-k4.iam.gserviceaccount.com"
+        from google.oauth2 import service_account
         
+        # 1. Try loading from Environment Variable (Best for Deployment)
         if EE_SERVICE_ACCOUNT_JSON:
-            # Production: Use environment variable JSON
-            import json
-            
-            # Check if it's already a dictionary or needs parsing
-            if isinstance(EE_SERVICE_ACCOUNT_JSON, dict):
-                service_account_info = EE_SERVICE_ACCOUNT_JSON
-            else:
-                try:
-                    service_account_info = json.loads(EE_SERVICE_ACCOUNT_JSON)
-                except Exception as json_err:
-                     print(f"⚠️ Error parsing JSON from env var: {json_err}")
-                     # If parsing fails, maybe it's a file path?
-                     if os.path.exists(EE_SERVICE_ACCOUNT_JSON):
-                         with open(EE_SERVICE_ACCOUNT_JSON) as f:
-                             service_account_info = json.load(f)
-                     else:
-                         raise json_err
+            try:
+                # Parse the JSON string from the environment variable
+                if isinstance(EE_SERVICE_ACCOUNT_JSON, str):
+                    key_content = json.loads(EE_SERVICE_ACCOUNT_JSON)
+                else:
+                    key_content = EE_SERVICE_ACCOUNT_JSON
+                    
+                credentials = service_account.Credentials.from_service_account_info(key_content)
+                ee.Initialize(credentials=credentials)
+                EE_INITIALIZED = True
+                print("✅ Google Earth Engine initialized from Environment Variable")
+            except Exception as e:
+                print(f"⚠️ Error parsing EE_SERVICE_ACCOUNT_JSON: {e}")
 
-            credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT, key_data=service_account_info)
-            ee.Initialize(credentials)
-            EE_INITIALIZED = True
-            print("✅ Google Earth Engine initialized from environment variable")
-        else:
-            # Development: Use local key file
+        # 2. Try loading from local file (Best for Local Development)
+        if not EE_INITIALIZED:
             EE_KEY_FILE = os.path.join(os.path.dirname(__file__), 'Encro', 'keys', 'Google earth engine service account key.json')
             if os.path.exists(EE_KEY_FILE):
-                credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT, EE_KEY_FILE)
-                ee.Initialize(credentials)
+                credentials = service_account.Credentials.from_service_account_file(EE_KEY_FILE)
+                ee.Initialize(credentials=credentials)
                 EE_INITIALIZED = True
                 print("✅ Google Earth Engine initialized from local file")
             else:
-                print(f"⚠️  Earth Engine key file not found: {EE_KEY_FILE}")
+                print(f"⚠️ Earth Engine key file not found at: {EE_KEY_FILE}")
+                # Try fallback default auth
+                try: 
+                    ee.Initialize()
+                    EE_INITIALIZED = True
+                    print("✅ Google Earth Engine initialized with default credentials")
+                except:
+                    pass
+
     except Exception as e:
-        print(f"⚠️  Earth Engine initialization failed: {e}")
+        print(f"⚠️ Earth Engine initialization failed: {e}")
 
 FOREST_CLASS = 1
 AGRI_CLASS = 4
