@@ -386,8 +386,16 @@ if EE_AVAILABLE:
                          clean_json = clean_json[1:-1]
                     if clean_json.startswith('"') and clean_json.endswith('"'):
                          clean_json = clean_json[1:-1]
-                         
-                    key_content = json.loads(clean_json)
+                    
+                    # Try to parse
+                    try:
+                         key_content = json.loads(clean_json)
+                    except json.JSONDecodeError as json_error:
+                         print(f"DEBUG: Initial JSON parse failed: {json_error}")
+                         # Last ditch effort: maybe it's Python dict string format?
+                         import ast
+                         key_content = ast.literal_eval(clean_json)
+
                 else:
                     key_content = EE_SERVICE_ACCOUNT_JSON
                 
@@ -398,8 +406,9 @@ if EE_AVAILABLE:
                 print("✅ Google Earth Engine initialized from Environment Variable")
             except Exception as e:
                 print(f"⚠️ CRITICAL: parsing EE_SERVICE_ACCOUNT_JSON failed: {e}")
-                import traceback
-                traceback.print_exc()
+                # Print first 20 chars safely to see what we got
+                if isinstance(EE_SERVICE_ACCOUNT_JSON, str):
+                     print(f"DEBUG: Env Var starts with: {EE_SERVICE_ACCOUNT_JSON[:20]}...")
 
         # 2. Try loading from local file (Best for Local Development)
         elif not EE_INITIALIZED:
