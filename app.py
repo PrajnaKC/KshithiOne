@@ -378,21 +378,31 @@ if EE_AVAILABLE:
         # 1. Try loading from Environment Variable (Best for Deployment)
         if EE_SERVICE_ACCOUNT_JSON:
             try:
-                # Parse the JSON string from the environment variable
+                # Handle potential string-within-string issues from some hostings
                 if isinstance(EE_SERVICE_ACCOUNT_JSON, str):
-                    key_content = json.loads(EE_SERVICE_ACCOUNT_JSON)
+                    # Clean up: sometimes copy-paste adds wrapping quotes
+                    clean_json = EE_SERVICE_ACCOUNT_JSON.strip()
+                    if clean_json.startswith("'") and clean_json.endswith("'"):
+                         clean_json = clean_json[1:-1]
+                    if clean_json.startswith('"') and clean_json.endswith('"'):
+                         clean_json = clean_json[1:-1]
+                         
+                    key_content = json.loads(clean_json)
                 else:
                     key_content = EE_SERVICE_ACCOUNT_JSON
-                    
+                
+                # Force the use of these specific credentials
                 credentials = service_account.Credentials.from_service_account_info(key_content)
                 ee.Initialize(credentials=credentials)
                 EE_INITIALIZED = True
                 print("✅ Google Earth Engine initialized from Environment Variable")
             except Exception as e:
-                print(f"⚠️ Error parsing EE_SERVICE_ACCOUNT_JSON: {e}")
+                print(f"⚠️ CRITICAL: parsing EE_SERVICE_ACCOUNT_JSON failed: {e}")
+                import traceback
+                traceback.print_exc()
 
         # 2. Try loading from local file (Best for Local Development)
-        if not EE_INITIALIZED:
+        elif not EE_INITIALIZED:
             EE_KEY_FILE = os.path.join(os.path.dirname(__file__), 'Encro', 'keys', 'Google earth engine service account key.json')
             if os.path.exists(EE_KEY_FILE):
                 credentials = service_account.Credentials.from_service_account_file(EE_KEY_FILE)
