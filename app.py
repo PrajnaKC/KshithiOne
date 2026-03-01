@@ -399,8 +399,16 @@ if EE_AVAILABLE:
                 else:
                     key_content = EE_SERVICE_ACCOUNT_JSON
                 
-                # Force the use of these specific credentials
-                credentials = service_account.Credentials.from_service_account_info(key_content)
+                # Force the use of these specific credentials WITH SCOPES
+                # Earth Engine requires this specific scope
+                EE_SCOPES = ['https://www.googleapis.com/auth/earthengine']
+                
+                credentials = service_account.Credentials.from_service_account_info(
+                    key_content, 
+                    scopes=EE_SCOPES
+                )
+                
+                # Initialize
                 ee.Initialize(credentials=credentials)
                 EE_INITIALIZED = True
                 print("✅ Google Earth Engine initialized from Environment Variable")
