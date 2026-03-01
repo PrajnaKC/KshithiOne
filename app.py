@@ -378,7 +378,22 @@ if EE_AVAILABLE:
         if EE_SERVICE_ACCOUNT_JSON:
             # Production: Use environment variable JSON
             import json
-            service_account_info = json.loads(EE_SERVICE_ACCOUNT_JSON)
+            
+            # Check if it's already a dictionary or needs parsing
+            if isinstance(EE_SERVICE_ACCOUNT_JSON, dict):
+                service_account_info = EE_SERVICE_ACCOUNT_JSON
+            else:
+                try:
+                    service_account_info = json.loads(EE_SERVICE_ACCOUNT_JSON)
+                except Exception as json_err:
+                     print(f"⚠️ Error parsing JSON from env var: {json_err}")
+                     # If parsing fails, maybe it's a file path?
+                     if os.path.exists(EE_SERVICE_ACCOUNT_JSON):
+                         with open(EE_SERVICE_ACCOUNT_JSON) as f:
+                             service_account_info = json.load(f)
+                     else:
+                         raise json_err
+
             credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT, key_data=service_account_info)
             ee.Initialize(credentials)
             EE_INITIALIZED = True

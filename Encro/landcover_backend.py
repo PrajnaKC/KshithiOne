@@ -12,9 +12,32 @@ from flask_cors import CORS
 
 SERVICE_ACCOUNT = "prajna-earth-engine-service-ac@academic-script-473911-k4.iam.gserviceaccount.com"
 
-KEY_FILE = "keys/Google earth engine service account key.json"
+# Modified to handle both local development and deployment environment variables
+import os
+import json
 
-credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT, KEY_FILE)
+KEY_FILE = "keys/Google earth engine service account key.json"
+EE_SERVICE_ACCOUNT_JSON = os.getenv("EE_SERVICE_ACCOUNT_JSON")
+
+if EE_SERVICE_ACCOUNT_JSON:
+    # Check if it's already a dictionary or needs parsing
+    if isinstance(EE_SERVICE_ACCOUNT_JSON, dict):
+        service_account_info = EE_SERVICE_ACCOUNT_JSON
+    else:
+        try:
+            service_account_info = json.loads(EE_SERVICE_ACCOUNT_JSON)
+        except Exception:
+             # Fallback if parsing fails (maybe it's a file path?)
+             service_account_info = None
+
+    if service_account_info:
+        credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT, key_data=service_account_info)
+    else:
+        # Fallback to local file if env var exists but failed to parse/was path
+        credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT, KEY_FILE)
+else:
+    # Local development
+    credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT, KEY_FILE)
 
 ee.Initialize(credentials)
 
