@@ -1581,9 +1581,28 @@ def encro_static(filename):
 @app.route('/analyze', methods=['POST'])
 def analyze_encroachment():
     """Earth Engine land cover analysis for encroachment detection."""
-    if not EE_INITIALIZED:
-        return jsonify({"error": "Earth Engine not initialized"}), 500
+    # --- ADDED DEBUGGING ---
     try:
+        if not EE_INITIALIZED:
+             # Try one last ditch effort to init
+             if os.environ.get('EE_SERVICE_ACCOUNT_JSON'):
+                 ee.Initialize()
+    except Exception as e:
+        print(f"GEE RE-INIT FAILED: {e}")
+        return jsonify({
+            "error": "Earth Engine not initialized",
+            "details": str(e),
+            "env_var_present": bool(os.environ.get('EE_SERVICE_ACCOUNT_JSON'))
+        }), 500
+    # -----------------------
+
+    try:
+        if not EE_INITIALIZED:
+             return jsonify({
+                "error": "Earth Engine not initialized",
+                "details": "EE_INITIALIZED flag is False even after check."
+            }), 500
+
         geojson = request.json
         polygon = ee.Geometry.Polygon(geojson["coordinates"])
 
