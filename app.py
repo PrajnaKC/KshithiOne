@@ -1605,7 +1605,15 @@ def analyze_encroachment():
         if not EE_INITIALIZED:
              # Try one last ditch effort to init
              if os.environ.get('EE_SERVICE_ACCOUNT_JSON'):
-                 ee.Initialize()
+                 from google.oauth2 import service_account
+                 raw_val = os.environ.get('EE_SERVICE_ACCOUNT_JSON').strip()
+                 if raw_val.startswith("'") and raw_val.endswith("'"):
+                    raw_val = raw_val[1:-1]
+                 json_d = json.loads(raw_val)
+                 c = service_account.Credentials.from_service_account_info(json_d)
+                 ee.Initialize(credentials=c)
+                 # Note: We don't set EE_INITIALIZED global here to avoid thread safety issues, 
+                 # but this thread is now authed.
     except Exception as e:
         print(f"GEE RE-INIT FAILED: {e}")
         return jsonify({
@@ -1616,10 +1624,16 @@ def analyze_encroachment():
     # -----------------------
 
     try:
-        if not EE_INITIALIZED:
+        # If we got past the try block, we might be authed even if EE_INITIALIZED is False
+        # Test it with a lightweight call
+        try:
+             ee.Number(1).getInfo()
+        except Exception as auth_error:
+             # Real auth failure
              return jsonify({
                 "error": "Earth Engine not initialized",
-                "details": "EE_INITIALIZED flag is False even after check."
+                "details": str(auth_error),
+                "debug_info": "Failed explicit connectivity test inside /analyze"
             }), 500
 
         geojson = request.json
